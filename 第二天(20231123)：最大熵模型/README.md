@@ -98,36 +98,66 @@ $$
 
 它是一个二值函数，当 $x\$ 和 $y\$ 满足这个事实时取值为1，否则取值为0。
 
-特征函数 $f(x,y)$ 关于经验分布 $\widetilde{P}(X,Y)$ 的期望值，用 $E_{\widetilde{P}}(f)$ 表示:
+特征函数 $f(x,y)\$ 在训练集上关于联合经验分布的期望值：
 
 $$
-{E_{\widetilde P}}(f) = \sum\limits_{x,y} {\widetilde P(x,y)f(x,y)} \
+{E_{\widetilde P}}(f) = \sum\limits_{x,y} {\widetilde P(x,y)f(x,y)} = \sum\limits_{x,y} {\widetilde P(x)\widetilde P(x|y)f(x,y)}\
 $$
 
-特征函数 $f(x,y)\$ 关于模型 $P(Y|X)\$ 与经验分布 $\widetilde{P}(X)$ 的期望值，用 $E_{{P}}(f)$ 表示:
+上式中出现的分布都是经验分布，说明 ${E_{\widetilde P}}(f)$ 仅与训练集有关，并不是真实情况。那么真实情况应该是什么样的呢？其实只需要将经验分布转变成真实的分布就行了：
 
 $$
-{E_P}(f) = \sum\limits_{x,y} {P(x,y)f(x,y)} = \sum\limits_{x,y} {P(x)P(y|x)f(x,y)} = \sum\limits_{x,y} {\widetilde P(x)P(y|x)f(x,y)}\
+{E_P}(f) = \sum\limits_{x,y} {P(x,y)f(x,y)} = \sum\limits_{x,y} {P(x)P(y|x)f(x,y)}\
 $$
 
-*我们的目的是用最大熵原理选择最好的分类模型，也就是选择一个条件概率分布 $P(y|x)\$ ，所以我们用 $x\$ 的经验分布 $\widetilde P(x)\$ 作为它的分布 $P(x)\$ 估计值将其替代*
-
-如果模型能够获取训练数据中的信息(模型预测结果与训练数据结果一致)，那么就可以假设这两个期望值相等，即
+上式是特征函数 $f(x,y)\$ 在模型上关于模型 $P(X|Y)\$ 与 $P(x)\$ 的期望值，我们需要求的模型即 $P(X|Y)\$ ，但是其中还存在着一个未知分布 $P(x)\$ 。由于我们并不知道真实情况的 $P(x)\$ 是什么，我们可以使用 $P(x)\$ 的经验分布代替真实的 $P(x)\$ 来对真实情况进行近似表示，于是上式转变为：
 
 $$
-{E_P}(f) = {E_{\widetilde P}}(f)\tag{2}
+{E_P}(f) = \sum\limits_{x,y} {\widetilde P(x)P(y|x)f(x,y)}\
+$$
+
+现在我们有了一个针对训练集的期望 ${E_{\widetilde P}}(f)$ ，和针对模型的期望 ${E_{P}}(f)$ ，此时，只需要让两式相等（使在总体中出现的概率等于在样本中出现的概率），就能够让模型拟合训练集，并最终求得我们的模型：
+如果模型能够获取训练数据中的信息，那么就可以假设这两个期望值相等，即
+
+$$
+{E_P}(f) = {E_{\widetilde P}}(f)\
 $$
 
 或
 
 $$
-\sum\limits_{x,y} {\widetilde P(x)P(y|x)f(x,y)}  = \sum\limits_{x,y} {\widetilde P(x,y)f(x,y)} \tag{3}
+\sum\limits_{x,y} {\widetilde P(x)P(y|x)f(x,y)}  = \sum\limits_{x,y} {\widetilde P(x,y)f(x,y)} \
 $$
 
-确定对于确定x和y的条件熵为：
+上式中 $P(y|x)\$ 为模型，两个经验分布可以从训练集中得到， $f(x,y)\$ 是特征函数。  
+上式即为一个约束条件，假如有n个特征函数 ${f_i}(x,y),i = 1,2, \cdots ,n\$ ，那么就有n个约束条件。除此之外还有一个必定存在的约束，即模型概率之和等于1： $\sum\limits_y {P(y|x) = 1} \$ 
+
+现在我们有了所有的约束条件，接着写出模型的熵的公式，就可以根据最大熵规则，在约束条件下得到模型。
+
+定义在条件概率分布 $P(Y|X)\$ 上的条件熵为：
 
 $$
-
+\begin{align*}
+H(P) = H(Y|X) & =  \sum\limits_{i = 1}^n {P(X = {x_i})H(Y|X = {x_i})} \\
+ & =  - \sum\limits_{i = 1}^n {P(X = {x_i})} \sum\limits_{j = m}^m {P(Y = {y_j}|X = {x_i})\log P(Y = {y_j}|X = {x_i})} \\
+ & =  - \sum\limits_{x,y} {P(x)P(y|x)\log P(y|x)} \\
+ & =  - \sum\limits_{x,y} {\widetilde P(x)P(y|x)\log P(y|x)} 
+\end{align*}\
 $$
 
+条件熵中依然使用了 $P(x)\$ 的经验分布代替真实分布，式中的对数为自然对数（以e为底）。那么求解模型的问题转换为求得最大化的条件熵问题。
 
+**定义**(最大熵模型) 假设满足所有约束条件的模型集合为
+
+$$
+{\cal C} \equiv \\{ P \in {\cal P}|{E_P}({f_i}) = {E_{\tilde P}}({f_i}),i = 1,2, \cdots ,n \\} \
+$$
+
+定义在条件概率分布 $P(Y|X)\$ 上的条件熵为：
+
+$$
+H(P) =  - \sum\limits_{x,y} {\widetilde P(x)P(y|x)\log P(y|x)} \
+$$
+
+则模型集合c中条件熵h最大的模型成为最大熵模型。式中的对数为自然对数（以e为底）
+## 最大熵模型的学习
